@@ -148,7 +148,10 @@ void LinkedList::Search(double d)
 		node * current = head;
 		while(current != nullptr)
 		{
-			if((long long)(current -> x) * (current -> x) + (long long)(current -> y) * (current -> y) <= d * d) // Check for out of range for integer
+			long long d1 = (long long)(current -> x) * (current -> x);
+			long long d2 = (long long)(current -> y) * (current -> y);
+			long long d3 = d1 + d2;
+			if(d3 <= d * d) // Check for out of range for integer
 			{
 				cout << '(' << current -> x << ',' << current -> y << ')' << ' ';
 			}
