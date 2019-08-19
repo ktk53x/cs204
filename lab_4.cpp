@@ -30,8 +30,11 @@ vector<string> StringParser(string s)
 	return token;
 }
 
+
 int prec(string c) 
 { 
+    if(!c.compare("^"))
+    	return 3;
     if(!c.compare("*") || !c.compare("/")) 
     	return 2; 
     if(!c.compare("+") || !c.compare("-")) 
@@ -69,6 +72,16 @@ stack<string> InfixToPostfix(vector<string> s)
                 ans.push(c); 
             } 
             p.push(s[i]); 
+        }
+        else if(!s[i].compare("^"))
+        {
+        	while(!p.empty() && prec(s[i]) < prec(p.top()))
+        	{
+        		string c = p.top();
+        		p.pop();
+        		ans.push(c);
+        	}
+        	p.push(s[i]);
         } 
         else
         {
@@ -86,7 +99,6 @@ stack<string> InfixToPostfix(vector<string> s)
     return ans; 
 } 
 
-
 struct node 
 { 
     string val; 
@@ -95,8 +107,8 @@ struct node
 
 bool isOperator(string c) 
 { 
-    if (!c.compare("+") || !c.compare("-") || !c.compare("*") || !c.compare("/")) 
-        return true; 
+    if (!c.compare("+") || !c.compare("-") || !c.compare("*") || !c.compare("/") || !c.compare("^")) 
+        return true;
     return false; 
 } 
 
@@ -104,22 +116,11 @@ bool isOperator(string c)
 node* newNode(string v) 
 { 
     node * temp = new node; 
-    temp->left = temp->right = nullptr; 
+    temp->left = nullptr; 
+    temp->right = nullptr;
     temp->val = v; 
     return temp; 
 } 
-
-/*void postOrder(node *t) 
-{ 
-    
-    if(t) 
-    { 
-        postOrder(t->left); 
-        postOrder(t->right);
-        
-        cout << t-> val;
-    } 
-}*/
 
 int eval(node* root)  
 {   
@@ -140,11 +141,14 @@ int eval(node* root)
         
     if (root->val=="/")  
         return l_val/r_val; 
+  
+    return pow(l_val, r_val);
 }
+
 
 node* Tree(vector<string> s) 
 { 
-    stack<node *> st; 
+    stack<node*> st; 
     node *t, *t1, *t2;
     for (int i=0; i < s.size(); i++) 
     { 
@@ -171,27 +175,31 @@ node* Tree(vector<string> s)
     return t; 
 } 
 
+
 int main()
 {
-	int n, q;
-	string s;
-	cin >> n;
-	for(int i = 0; i < n; i++)
+	int q, n;
+	cin >> q;
+	while(q--)
 	{
-		cin >> q;
-		cin >> s;
-		vector<string> r = StringParser(s);
-		stack<string> st = InfixToPostfix(r);
-		vector<string> v;
-		while(!s.empty())
+		cin >> n;
+		while(n--)
 		{
-			v.push_back(st.top());
-			st.pop();
+			string a;
+			stack<string> p;
+			cin >> a;
+			vector<string> s = StringParser(a);
+			vector<string> v;
+			p = InfixToPostfix(s);
+			while(!p.empty())
+			{
+				v.push_back(p.top());
+				p.pop();
+			}
+			reverse(v.begin(), v.end());
+			node *t = Tree(v);
+			cout<< eval(t) << '\n';
 		}
-		reverse(v.begin(), v.end());
-		node * t = Tree(v);
-		cout << eval(t) << '\n';
 	}
 	return 0;
 }
-		
