@@ -3,18 +3,102 @@
 
 using namespace std;
 
-map<string, string> my_map;
+// Node of the evaluation tree
+struct node 
+{ 
+    string val; 
+    node* left, *right; 
+    node(string s) : left{nullptr}, right{nullptr}, val{s}
+    {}
+    node() : left{nullptr}, right{nullptr}, val{NULL}
+    {}
+};
 
-bool isOperator(string c) 
+// Function Declarations
+bool isOperator(string&);
+vector<string>& stringParser(string&, vector<string>&);
+vector<string>& unaryMinusReplacer(vector<string>&);
+int precedence(string&);
+vector<string>& infixToPostfix(vector<string>&, vector<string>&);
+bool isNumber(string&);
+node* evaluationTreeCreator(vector<string>&);
+int evaluation(node* root);
+
+// Global Map
+map<string, string> variable;
+
+int main()
+{
+    int q, n;
+    cin >> q;
+    while(q--)
+    {
+        cin >> n;
+        while(n--)
+        {
+            string a;
+            vector<string> s;
+            cin >> a;
+            s = stringParser(a, s);
+            s = unaryMinusReplacer(s);
+            if(s.size() > 1 && !s[1].compare("="))
+            {
+                vector<string> s2;
+                vector<string> p;
+                for(int i = 0; i < s.size() - 2; i++)
+                {
+                    s2.push_back(s[i+2]);
+                }
+                s2 = unaryMinusReplacer(s2);
+                p = infixToPostfix(s2, p);
+                node * t = evaluationTreeCreator(p);
+                if(variable.find(s[0]) != variable.end())
+                {
+                    map<string, string>::iterator it  = variable.find(s[0]);
+                    it -> second = to_string(evaluation(t));
+                }
+                else
+                {
+                    variable.insert(pair<string, string>(s[0], to_string(evaluation(t))));
+                }
+            }
+            else
+            {
+                vector<string> p;
+                p = infixToPostfix(s, p);
+                node * t = evaluationTreeCreator(p);
+                if(evaluation(t) != inf)
+                    cout<< evaluation(t) << '\n';
+                else
+                    cout << "Can't be evaluated\n";
+            }
+        }
+        variable.clear();
+    }
+    return 0;
+}
+
+bool isOperator(string& c) 
 { 
     if (!c.compare("+") || !c.compare("-") || !c.compare("*") || !c.compare("/") || !c.compare("^") || !c.compare("$")) 
         return true;
     return false; 
 } 
 
-vector<string> StringParser(string s)
+int precedence(string& c) 
+{ 
+    if(!c.compare("$"))
+        return 4;
+    if(!c.compare("^"))
+        return 3;
+    if(!c.compare("*") || !c.compare("/")) 
+        return 2; 
+    if(!c.compare("+") || !c.compare("-")) 
+        return 1;
+} 
+
+vector<string>& stringParser(string& s, vector<string>& token)
 {
-    vector<string> token;
     int j, count;
     for(int i = 0; i < s.size(); i++)
     {
@@ -25,11 +109,13 @@ vector<string> StringParser(string s)
             count++;
             j++;
         }
+        //Since numbers and variables are always separated by an operator we can't enter both loops simultaneously
         while(j < s.size() && ((s[j] >= 'a' && s[j] <= 'z') || (s[j] >= 'A' && s[j] <= 'Z')))
         {
             count++;
             j++;
         }
+        
         if(j == i)
         {
             string a(1, s[i]);
@@ -45,7 +131,7 @@ vector<string> StringParser(string s)
     return token;
 }
 
-vector<string> UnaryMinusReplacer(vector<string> s)
+vector<string>& unaryMinusReplacer(vector<string>& s)
 {   
     for(int i = 0; i < s.size(); i++)
     {
@@ -57,197 +143,92 @@ vector<string> UnaryMinusReplacer(vector<string> s)
     return s;
 }
 
-int prec(string c) 
+vector<string>& infixToPostfix(vector<string>& s, vector<string>& ans) 
 { 
-    if(!c.compare("$"))
-        return 4;
-    if(!c.compare("^"))
-        return 3;
-    if(!c.compare("*") || !c.compare("/")) 
-        return 2; 
-    if(!c.compare("+") || !c.compare("-")) 
-        return 1;
-} 
-
-stack<string> InfixToPostfix(vector<string> s) 
-{ 
-    stack<string> p, ans;
+    stack<string> p;
     for(int i = 0; i < s.size(); i++) 
     { 
         if(!s[i].compare("(")) 
-        p.push("("); 
-        
+            p.push("("); 
         else if(!s[i].compare(")")) 
         { 
             while(!p.empty() && (p.top()).compare("(")) 
             { 
                 string c = p.top(); 
                 p.pop(); 
-                ans.push(c); 
+                ans.push_back(c); 
             } 
             if(!(p.top()).compare("(")) 
             { 
                 string c = p.top(); 
                 p.pop(); 
             } 
-        }    
+        }
         else if(!s[i].compare("+") || !s[i].compare("-") || !s[i].compare("*") || !s[i].compare("/"))
         { 
-            while(!p.empty() && (p.top()).compare("(") && prec(s[i]) <= prec(p.top())) 
+            while(!p.empty() && (p.top()).compare("(") && precedence(s[i]) <= precedence(p.top())) 
             { 
                 string c = p.top(); 
                 p.pop(); 
-                ans.push(c); 
+                ans.push_back(c); 
             } 
             p.push(s[i]); 
         }
-        else if(!s[i].compare("$"))
+        else if(!s[i].compare("^") || !s[i].compare("$"))
         {
-            while(!p.empty() && (p.top()).compare("(") && prec(s[i]) < prec(p.top()))
+            while(!p.empty() && (p.top()).compare("(") && precedence(s[i]) < precedence(p.top()))
             {
                 string c = p.top();
                 p.pop();
-                ans.push(c);
-            }
-            p.push(s[i]);
-        }
-        else if(!s[i].compare("^"))
-        {
-            while(!p.empty() && (p.top()).compare("(") && prec(s[i]) < prec(p.top()))
-            {
-                string c = p.top();
-                p.pop();
-                ans.push(c);
+                ans.push_back(c);
             }
             p.push(s[i]);
         } 
         else
         {
-            ans.push(s[i]);
+            ans.push_back(s[i]);
         }
-  
     } 
-    
     while(!p.empty()) 
     { 
         string c = p.top(); 
         p.pop(); 
-        ans.push(c);
+        ans.push_back(c);
     }
     return ans; 
 } 
 
-/*vector<string> UnaryMinusRemoval(vector<string> s)
+bool isNumber(string& s)
 {
-    for(int i = 0; i < s.size(); i++)
-    {
-        if(!s[i].compare("$"))
-        {
-            for(int j = 0; j < i; j++)
-            {
-                if(!isOperator(s[j]))
-                {
-                    if(s[j][0] == '-')
-                    {
-                        s[j].erase(s[j].begin());
-                    }
-                    else
-                    {
-                        s[j].insert(0, "-");
-                    }
-                }
-            }
-
-        }
-    }
-    return s;
-}*/
-
-struct node 
-{ 
-    string val; 
-    node* left, *right; 
-};
-
-node* newNode(string v) 
-{ 
-    node * temp = new node; 
-    temp->left = nullptr; 
-    temp->right = nullptr;
-    temp->val = v; 
-    return temp; 
-} 
-
-bool is_number(string& s)
-{
-    string::const_iterator it = s.begin();
+    string::iterator it = s.begin();
     if(*it == '-')
         it++;
-    while (it != s.end() && std::isdigit(*it)) ++it;
+    if(it == s.end())
+        return false;
+    while (it != s.end() && isdigit(*it)) 
+        ++it;
     return !s.empty() && it == s.end();
 }
 
-int eval(node* root)  
-{   
-    if (!root)  
-        return 0;   
-    if (!root->left && !root->right)
-    {  
-        if(my_map.find(root->val) != my_map.end())
-        {
-            return stoi(my_map.at(root->val));
-        }
-        else
-        {
-            if(is_number(root->val))
-                return stoi(root->val); 
-            else
-            {
-                return inf;
-            }
-        } 
-    }
-    int l_val = eval(root->left);  
-    int r_val = eval(root->right);
-    if(l_val == inf || r_val == inf)
-        return inf;  
-    if (root->val=="+")  
-        return l_val+r_val;  
-  
-    if (root->val=="-")  
-        return l_val-r_val;  
-  
-    if (root->val=="*")  
-        return l_val*r_val;  
-        
-    if (root->val=="/")  
-        return l_val/r_val; 
-    if (root->val=="$")
-        return l_val*r_val;
-  
-    return pow(l_val, r_val);
-}
-
-
-node* Tree(vector<string> s) 
+node* evaluationTreeCreator(vector<string>& s) 
 { 
     stack<node*> st; 
     node *t, *t1, *t2;
-    for (int i=0; i < s.size(); i++) 
+    for (int i = 0; i < s.size(); i++) 
     { 
         if (!isOperator(s[i])) 
         { 
-            t = newNode(s[i]); 
+            t = new node(s[i]); 
             st.push(t); 
         }
         else 
         { 
             if(!s[i].compare("$"))
             {
-                t = newNode("-1");
+                t = new node("-1");
                 st.push(t);
             } 
-            t = newNode(s[i]); 
+            t = new node(s[i]); 
             t1 = st.top();
             st.pop();
             t2 = st.top(); 
@@ -261,66 +242,40 @@ node* Tree(vector<string> s)
     st.pop(); 
   
     return t; 
-} 
+}
 
-int main()
-{
-    int q, n;
-    cin >> q;
-    while(q--)
-    {
-        cin >> n;
-        while(n--)
+int evaluation(node* root)  
+{   
+    if (!root)  
+        return 0;   
+    if (!root->left && !root->right)
+    {  
+        if(variable.find(root->val) != variable.end())
         {
-            string a;
-            stack<string> p;
-            cin >> a;
-            vector<string> s = StringParser(a);
-            s = UnaryMinusReplacer(s);
-            if(s.size() > 1 && !s[1].compare("="))
-            {
-                vector<string> v;
-                vector<string> s2;
-                for(int i = 0; i < s.size() - 2; i++)
-                {
-                    s2.push_back(s[i+2]);
-                }
-                s2 = UnaryMinusReplacer(s2);
-                p = InfixToPostfix(s2);
-                while(!p.empty())
-                {
-                    v.push_back(p.top());
-                    p.pop();
-                }
-                reverse(v.begin(), v.end());
-                node * t = Tree(v);
-                if(my_map.find(s[0]) != my_map.end())
-                {
-                    map<string, string>::iterator it  = my_map.find(s[0]);
-                    it -> second = to_string(eval(t));
-                }
-                else
-                {
-                    my_map.insert(pair<string, string>(s[0], to_string(eval(t))));
-                }
-            }
-            else
-            {
-                vector<string> v;
-                p = InfixToPostfix(s);
-                while(!p.empty())
-                {
-                    v.push_back(p.top());
-                    p.pop();
-                }
-                reverse(v.begin(), v.end());
-                node *t = Tree(v);
-                if(eval(t) != inf)
-                    cout<< eval(t) << '\n';
-                else
-                    cout << "Cant be evaluated\n";
-            }
+            return stoi(variable.at(root->val));
         }
+        else
+        {
+            if(isNumber(root->val))
+                return stoi(root->val); 
+            else
+                return inf;
+        } 
     }
-    return 0;
+    int l_val = evaluation(root->left);  
+    int r_val = evaluation(root->right);
+
+    if(l_val == inf || r_val == inf)
+        return inf;
+    if (root -> val == "+")  
+        return l_val + r_val;  
+    if (root -> val == "-")  
+        return l_val - r_val;  
+    if (root -> val == "*")  
+        return l_val * r_val;  
+    if (root -> val == "/")  
+        return l_val / r_val; 
+    if (root -> val == "$")
+        return l_val * r_val;
+    return pow(l_val, r_val);
 }
