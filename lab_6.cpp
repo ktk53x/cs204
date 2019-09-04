@@ -39,8 +39,10 @@ int main()
     int n, user_id, recharge, operation;
     node * AVL = nullptr, * temp;
     cumulative_maximum m;
+    int q;
     cin >> n;
-    while(n--)
+    cin >> q;
+    while(q--)
     {
         cin >> operation;
         if(operation == 1)
@@ -50,7 +52,7 @@ int main()
             temp = search(AVL, user_id);
             if(temp == nullptr)
             {
-                temp = insert(AVL, user_id, recharge);
+                AVL = insert(AVL, user_id, recharge);
                 if(m.max_recharge < recharge)
                 {
                     m.max_recharge = recharge;
@@ -168,7 +170,7 @@ node * insert(node * root, int user_id, int recharge)
         return rightRotate(root);
     }
 
-    if(balance > -1 && user_id < root -> right -> user_id)
+    if(balance < -1 && user_id < root -> right -> user_id)
     {
         root -> right = rightRotate(root -> right);
         return leftRotate(root);
@@ -177,14 +179,14 @@ node * insert(node * root, int user_id, int recharge)
     return root;
 }
 
-node * search(node * node, int user_id)
+node * search(node * root, int user_id)
 {
-    if(node == nullptr || node -> user_id == user_id)
+    if(root == nullptr || root -> user_id == user_id)
     {
-        return node;
+        return root;
     }
-    if(node -> user_id < user_id)
-        return search(node -> right, user_id);
+    if(root -> user_id < user_id)
+        return search(root -> right, user_id);
 
-    return search(node -> left, user_id);
+    return search(root -> left, user_id);
 }
