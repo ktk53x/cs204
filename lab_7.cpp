@@ -4,7 +4,7 @@
 
 using namespace std;
 
-bool lexicographical_sort(string a, string b)
+bool lexicographical_sort(string& a, string& b)
 {
     return ((a + b).compare(b + a) > 0);
 }
