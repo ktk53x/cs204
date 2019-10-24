@@ -1,6 +1,9 @@
 #include<bits/stdc++.h>
+
 #define lli long long int
+
 using namespace std;
+
 struct Point 
 {
 	lli x;
@@ -24,7 +27,7 @@ int orientation(Point a, Point b, Point c)
 		return -1;
 	}
 }
-//returns minimum and places the point with least y-coordinate in the beginning
+
 Point minY(Point * arr, int n)
 {
 	Point ans;
@@ -56,7 +59,7 @@ Point minY(Point * arr, int n)
 
 	return ans;
 }
-//Watch out overflow if the points are too far away
+
 lli squaredistance(Point a,Point b)
 {
 	return (b.x-a.x)*(b.x-a.x)+(b.y-a.y)*(b.y-a.y);
@@ -148,7 +151,6 @@ for(int i=3;i<nfinal;i++)
 	
 }
 
-//Printing convex hull, fix if same points are added twice
 cout<<convex_hull.size()<<endl;
 int mini=0;
 for(int i=0;i<convex_hull.size();i++)
