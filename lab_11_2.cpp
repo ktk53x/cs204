@@ -78,7 +78,8 @@ int main()
 {
     int n, m, u, v, weight, k = 0;
     cin >> n >> m;
-    graph g(2*n);
+    int t = m + n;
+    graph g(t);
     for(int i = 0; i < m; i++)
     {
         cin >> u >> v >> weight;
