@@ -104,14 +104,15 @@ void list::del_at_end()
     node * temp = head, * prev = nullptr;
     if(head)
     {
-        while(temp != nullptr)
-        {
-            prev = temp;
-            temp = temp -> next;
-        }
-        if(prev == head)
+        if(head -> next == nullptr)
             head = nullptr;
-        delete(prev);
+        else 
+        {
+            while(temp -> next != nullptr)
+                prev = temp, temp = temp -> next;
+            delete(temp);
+            prev -> next = nullptr;
+        }   
     }
 }
 
